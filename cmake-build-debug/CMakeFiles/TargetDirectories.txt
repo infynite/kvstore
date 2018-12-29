@@ -1,0 +1,3 @@
+/Users/aminrezaei/WorkSpace/C Workspace/kvstore/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/Users/aminrezaei/WorkSpace/C Workspace/kvstore/cmake-build-debug/CMakeFiles/edit_cache.dir
+/Users/aminrezaei/WorkSpace/C Workspace/kvstore/cmake-build-debug/CMakeFiles/kvstore.dir

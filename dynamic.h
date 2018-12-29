@@ -6,12 +6,14 @@
 #define KVSTORE_DYNAMIC_H
 
 #include <stdio.h>
+#include <wchar.h>
 #include "str.h"
 
 struct Dynamic_t{
-    int type;
+    unsigned char type;
     union {
         char* s;
+        wchar_t* w;
         int i;
         float f;
         double d;
@@ -23,7 +25,7 @@ struct Dynamic_t{
 };
 typedef struct Dynamic_t Dynamic;
 enum{
-    STRING,INT,FLOAT,DOUBLE,CHARACTER,POINTER,LONG,LONG_DOUBLE
+    STRING,INT,FLOAT,DOUBLE,CHARACTER,POINTER,LONG,LONG_DOUBLE,WIDE_STRING
 };
 
 #define defineh_dcreator(T,FT) Dynamic dynamic_create##FT(T);
@@ -46,6 +48,8 @@ void dynamic_set##FT(Dynamic* d,T val){ \
  */
 #define dynamic_create(T) _Generic((T), \
                 char*: dynamic_creates, \
+                wchar_t *: dynamic_createw, \
+                const wchar_t *: dynamic_createw, \
                 const char*: dynamic_creates, \
                 int: dynamic_createi,  \
                 float: dynamic_createf,  \
@@ -60,6 +64,7 @@ void dynamic_set##FT(Dynamic* d,T val){ \
  */
 #define dynamic_set(D,T) _Generic((T), \
                 const char*: dynamic_sets, \
+                const wchar_t*: dynamic_setw, \
                 int: dynamic_seti,  \
                 float: dynamic_setf,  \
                 double: dynamic_setd,  \
@@ -70,6 +75,7 @@ void dynamic_set##FT(Dynamic* d,T val){ \
 )(D,T)
 
 defineh_dcreator(const char*,s)
+defineh_dcreator(const wchar_t*,w)
 defineh_dcreator(int,i)
 defineh_dcreator(float,f)
 defineh_dcreator(double,d)
@@ -79,6 +85,7 @@ defineh_dcreator(long,l)
 defineh_dcreator(long double,ld)
 
 defineh_dsetter(const char*,s)
+defineh_dsetter(const wchar_t*,w)
 defineh_dsetter(int,i)
 defineh_dsetter(float,f)
 defineh_dsetter(double,d)
@@ -121,6 +128,7 @@ int dynamic_writev(Dynamic,FILE*);
 int dynamic_read(Dynamic*,FILE*);
 
 define_dcreator(const char*,s,STRING)
+define_dcreator(const wchar_t*,w,WIDE_STRING)
 define_dcreator(int,i,INT)
 define_dcreator(float,f,FLOAT)
 define_dcreator(double,d,DOUBLE)
@@ -130,6 +138,7 @@ define_dcreator(long,l,LONG)
 define_dcreator(long double,ld,LONG_DOUBLE)
 
 define_dsetter(const char*,s,STRING)
+define_dsetter(const wchar_t*,w,WIDE_STRING)
 define_dsetter(int,i,INT)
 define_dsetter(float,f,FLOAT)
 define_dsetter(double,d,DOUBLE)
@@ -142,6 +151,7 @@ void* dynamic_get(Dynamic* d){
     switch(d->type){
         case INT:return &d->i;
         case STRING:return d->s;
+        case WIDE_STRING:return d->w;
         case LONG_DOUBLE:return &d->ld;
         case LONG:return &d->l;
         case FLOAT:return &d->f;
@@ -163,6 +173,7 @@ int dynamic_compare(Dynamic* f,Dynamic* s){
         case LONG:return f->l == s->l ? 0 : f->l < s->l ? -1 : 1;
         case FLOAT:return f->f == s->f ? 0 : f->f < s->f ? -1 : 1;
         case STRING:return streq(f->s,s->s) ? 0 : 1;
+        case WIDE_STRING:return wstreq(f->w,s->w) ? 0 : 1;
         case CHARACTER:return f->c == s->c ? 0 : f->c < s->c ? -1 : 1;
         default:return 2;
     }
@@ -170,7 +181,7 @@ int dynamic_compare(Dynamic* f,Dynamic* s){
 
 size_t dynamic_sizeof(Dynamic* d){
     size_t size = 0;
-    size += sizeof(int);
+    size += sizeof(char);
     switch(d->type) {
         case INT:size+= sizeof(int);break;
         case DOUBLE:size+= sizeof(double);break;
@@ -179,18 +190,23 @@ size_t dynamic_sizeof(Dynamic* d){
         case FLOAT:size+= sizeof(float);break;
         case CHARACTER:size+= sizeof(char);break;
         case STRING:size+= str_len(d->s) + sizeof(int);break;
+        case WIDE_STRING:size+= sizeof(wchar_t)*wstr_len(d->w) + sizeof(int);break;
         default:break;
     }
     return size;
 }
 int dynamic_write(Dynamic* d,FILE* file){
-    nreturnv(fwrite(&d->type, sizeof(int),1,file),1,0)
+    nreturnv(fwrite(&d->type, sizeof(char),1,file),1,0)
     if(d->type == STRING){
         int len[1] = {str_len(d->s)};
         nreturnv(fwrite(len, sizeof(int),1,file),1,0)
         nreturnv(fwrite(d->s, sizeof(char),(size_t)len[0],file),len[0],0)
+    }else if(d->type == WIDE_STRING){
+        int len[1] = {wstr_len(d->w)};
+        nreturnv(fwrite(len, sizeof(int),1,file),1,0)
+        nreturnv(fwrite(d->s, sizeof(wchar_t),(size_t)len[0],file),len[0],0)
     }else{
-        nreturnv(fwrite(dynamic_get(d),dynamic_sizeof(d)- sizeof(int),1,file),1,0)
+        nreturnv(fwrite(dynamic_get(d),dynamic_sizeof(d)- sizeof(char),1,file),1,0)
     }
     return 1;
 }
@@ -198,15 +214,21 @@ int dynamic_writev(Dynamic d,FILE* file) {
     return dynamic_write(&d,file);
 }
 int dynamic_read(Dynamic* d,FILE* file){
-    nreturnv(fread(&d->type, sizeof(int),1,file),1,0)
+    nreturnv(fread(&d->type, sizeof(char),1,file),1,0)
     if(d->type == STRING){
         int len[1];
         nreturnv(fread(len, sizeof(int),1,file),1,0)
         d->s = (char*) malloc(sizeof(char) * (len[0]+1));
         nreturnv(fread(d->s, sizeof(char),(size_t)len[0],file),len[0],0)
         d->s[len[0]]=0;
+    }else if(d->type == WIDE_STRING){
+        int len[1];
+        nreturnv(fread(len, sizeof(int),1,file),1,0)
+        d->w = (wchar_t*) malloc(sizeof(wchar_t) * (len[0]+1));
+        nreturnv(fread(d->w, sizeof(wchar_t),(size_t)len[0],file),len[0],0)
+        d->w[len[0]]=0;
     }else{
-        nreturnv(fread(dynamic_get(d),dynamic_sizeof(d)- sizeof(int),1,file),1,0)
+        nreturnv(fread(dynamic_get(d),dynamic_sizeof(d)- sizeof(char),1,file),1,0)
     }
     return 1;
 }

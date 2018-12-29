@@ -1,0 +1,66 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/Users/aminrezaei/WorkSpace/C Workspace/kvstore/dynamic.h
+stdio.h
+-
+wchar.h
+-
+str.h
+/Users/aminrezaei/WorkSpace/C Workspace/kvstore/str.h
+
+/Users/aminrezaei/WorkSpace/C Workspace/kvstore/kvstore.h
+stdio.h
+-
+string.h
+-
+map.h
+/Users/aminrezaei/WorkSpace/C Workspace/kvstore/map.h
+list.h
+/Users/aminrezaei/WorkSpace/C Workspace/kvstore/list.h
+syntax.h
+/Users/aminrezaei/WorkSpace/C Workspace/kvstore/syntax.h
+str.h
+/Users/aminrezaei/WorkSpace/C Workspace/kvstore/str.h
+
+/Users/aminrezaei/WorkSpace/C Workspace/kvstore/list.h
+dynamic.h
+/Users/aminrezaei/WorkSpace/C Workspace/kvstore/dynamic.h
+syntax.h
+/Users/aminrezaei/WorkSpace/C Workspace/kvstore/syntax.h
+stdlib.h
+-
+
+/Users/aminrezaei/WorkSpace/C Workspace/kvstore/main.c
+stdio.h
+-
+wchar.h
+-
+locale.h
+-
+kvstore.h
+/Users/aminrezaei/WorkSpace/C Workspace/kvstore/kvstore.h
+
+/Users/aminrezaei/WorkSpace/C Workspace/kvstore/map.h
+stdlib.h
+-
+dynamic.h
+/Users/aminrezaei/WorkSpace/C Workspace/kvstore/dynamic.h
+syntax.h
+/Users/aminrezaei/WorkSpace/C Workspace/kvstore/syntax.h
+
+/Users/aminrezaei/WorkSpace/C Workspace/kvstore/str.h
+stdlib.h
+-
+wchar.h
+-
+syntax.h
+/Users/aminrezaei/WorkSpace/C Workspace/kvstore/syntax.h
+
+/Users/aminrezaei/WorkSpace/C Workspace/kvstore/syntax.h
+

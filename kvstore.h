@@ -52,12 +52,12 @@ void store_init(Store* store,const char* file_name){
     if(!file) {
         file = fopen(store->file_name, "wb+");
     }else{
-        int table_count;
-        size_t res = fread(&table_count, sizeof(int),1,file);
+        unsigned short table_count;
+        size_t res = fread(&table_count, sizeof(unsigned short),1,file);
         if(res == 1){
             range(i,0,table_count){
-                int s;
-                size_t r = fread(&s, sizeof(int),1,file);
+                unsigned char s;
+                size_t r = fread(&s, sizeof(unsigned char),1,file);
                 if(r != 1) break;
                 char* n = (char*) malloc((s+1) * sizeof(char));
                 r = fread(n, sizeof(char), (size_t) s, file);
@@ -144,8 +144,8 @@ int store_save(Store* store){
     if(!bak) return -1;
     int proceed = 0;
     int table_count[1] = {map_size(&store->tables_head)};
-    nreturnv(fwrite(table_count, sizeof(int),1,bak),1,-2)
-    proceed += sizeof(int);
+    nreturnv(fwrite(table_count, sizeof(unsigned short),1,bak),1,-2)
+    proceed += sizeof(unsigned short);
     proceed += store_header_sizeof(store);
     int l = 0;
     range(i,0,map_size(&store->tables_head)){
@@ -166,12 +166,12 @@ int store_save(Store* store){
             nreturnv(dynamic_write(v,bak),1,-5)
         }
     }
-    nreturnv(fseek(bak, sizeof(int),SEEK_SET),0,-10)
+    nreturnv(fseek(bak, sizeof(unsigned short),SEEK_SET),0,-10)
     range(i,0,map_size(&store->tables_head)){
         Dynamic* key = map_index(&store->tables_head,$i);
         Dynamic* val = map_indexv(&store->tables_head,$i);
-        int k[1] = {str_len(key->s)};
-        nreturnv(fwrite(k, sizeof(int),1,bak),1,-11)
+        unsigned char k[1] = {(unsigned char)str_len(key->s)};
+        nreturnv(fwrite(k, sizeof(unsigned char),1,bak),1,-11)
         nreturnv(fwrite(dynamic_get(key), sizeof(char),(size_t)k[0],bak),k[0],-12)
         nreturnv(fwrite(dynamic_get(val), sizeof(int),1,bak),1,-13)
     }
@@ -186,7 +186,7 @@ size_t store_header_sizeof(Store* s){
     size_t size = 0;
     range(i,0,map_size(&s->tables_head)){
         Dynamic* k = map_index(&s->tables_head,$i);
-        size += str_len(k->s) + 2* sizeof(int);
+        size += str_len(k->s) + sizeof(int) + sizeof(unsigned char);
     }
     return size;
 }
